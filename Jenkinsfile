@@ -40,14 +40,11 @@ pipeline {
                 sh "sed -i 's|hello:latest|hello:${BUILD_ID}|g' deployment.yaml"
                 withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     println "Credentials contents: ${GOOGLE_APPLICATION_CREDENTIALS}"
-                    kubernetesDeploy(
-                        projectId: PROJECT_ID,
-                        clusterName: CLUSTER_NAME,
-                        location: LOCATION,
-                        manifestPattern: 'deployment.yaml',
-                        credentialsId: CREDENTIALS_ID,
-                        verifyDeployments: true
-                    )
+                    sh "gcloud auth activate-service-account --key-file ${GOOGLE_APPLICATION_CREDENTIALS}"
+                    sh "gcloud config set project ${PROJECT_ID}"
+                    sh "gcloud config set compute/zone ${LOCATION}"
+                    sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${LOCATION} --project ${PROJECT_ID}"
+                    kubectl apply -f deployment.yaml
                 }
             }
         }
