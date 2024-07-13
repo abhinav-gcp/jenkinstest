@@ -4,7 +4,7 @@ pipeline {
         PROJECT_ID = 'amplified-asset-426508-e7'
         CLUSTER_NAME = 'my-gke-cluster'
         LOCATION = 'us-central1-a'
-        CREDENTIALS_ID = 'amplified-asset-426508-e7'
+        CREDENTIALS_ID = 'multi-k8s'
         BUILD_ID = "${env.BUILD_NUMBER}"
     }
     stages {
@@ -32,12 +32,9 @@ pipeline {
         }        
         stage('Deploy to GKE') {
             steps{
-                sh "sed -i 's|hello:latest|hello:${BUILD_ID}|g' deployment.yaml"
-                withCredentials([file(credentialsId: 'gke-deploy-credentials', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                    echo "Retrieved credentials: ${GOOGLE_APPLICATION_CREDENTIALS}"
-                    step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: 'gke-deploy-credentials', verifyDeployments: true])
-                }
+                sh "sed -i 's/hello:latest/hello:${env.BUILD_ID}/g' deployment.yaml"
+                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
             }
         }
-    }
+    }    
 }
