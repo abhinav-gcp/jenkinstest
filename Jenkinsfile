@@ -33,8 +33,10 @@ pipeline {
         stage('Deploy to GKE') {
             steps{
                 sh "sed -i 's|hello:latest|hello:${BUILD_ID}|g' deployment.yaml"
-                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+                withCredentials([file(credentialsId: 'gke-deploy-credentials', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: 'gke-deploy-credentials', verifyDeployments: true])
+                }
             }
         }
-    }    
+    }
 }
