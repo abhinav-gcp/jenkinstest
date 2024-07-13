@@ -5,6 +5,7 @@ pipeline {
         CLUSTER_NAME = 'my-gke-cluster'
         LOCATION = 'us-central1-a'
         CREDENTIALS_ID = 'amplified-asset-426508-e7'
+        BUILD_ID = "${env.BUILD_NUMBER}"
     }
     stages {
         stage("Checkout code") {
@@ -15,7 +16,7 @@ pipeline {
         stage("Build image") {
             steps {
                 script {
-                    myapp = docker.build("abhinavsingh8477/hello:${env.BUILD_ID}")
+                    myapp = docker.build("abhinavsingh8477/hello:${BUILD_ID}")
                 }
             }
         }
@@ -24,14 +25,14 @@ pipeline {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'dockerID') {
                             myapp.push("latest")
-                            myapp.push("${env.BUILD_ID}")
+                            myapp.push("${BUILD_ID}")
                     }
                 }
             }
         }        
         stage('Deploy to GKE') {
             steps{
-                sh "sed -i '/hello:latest/hello:${env.BUILD_ID}/g' deployment.yaml"
+                sh "sed -i 's|hello:latest|hello:${BUILD_ID}|g' deployment.yaml"
                 step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
             }
         }

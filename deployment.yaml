@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: hello
-          image: abhinavsingh8477/hello:latest
+          image: abhinavsingh8477/hello:${BUILD_ID}
           imagePullPolicy: Always
           ports:
           - containerPort: 5000
