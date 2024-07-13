@@ -44,7 +44,7 @@ pipeline {
                     sh "gcloud config set project ${PROJECT_ID}"
                     sh "gcloud config set compute/zone ${LOCATION}"
                     sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${LOCATION} --project ${PROJECT_ID}"
-                    kubectl apply -f deployment.yaml
+                    sh "kubectl apply -f deployment.yaml"
                 }
             }
         }
