@@ -36,18 +36,16 @@ pipeline {
         }
         stage('Deploy to GKE') {
             steps {
-                withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS_FILE')]) {
-                    withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS_FILE}"]) {
-                        sh "gcloud auth activate-service-account --key-file ${GOOGLE_APPLICATION_CREDENTIALS_FILE}"
-                        sh "gcloud config set project ${PROJECT_ID}"
-                        sh "gcloud config set compute/region ${LOCATION}"
-                        sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID}"
-                        // Install kubectl using a package manager
-                        sh "sudo apt-get update && sudo apt-get install -y kubectl"
-                        // Deploy to GKE
-                        sh "kubectl apply -f deployment.yaml"
-                    }
-                }
+                sh "sed -i '/${DOCKER_IMAGE_NAME}:latest/${DOCKER_IMAGE_NAME}:${BUILD_ID}/g' deployment.yaml"
+                kubernetesDeploy(
+                    configs: 'deployment.yaml',
+                    enableConfigSubstitution: true,
+                    kubeconfigId: CREDENTIALS_ID,
+                    clusterUrl: "https://${LOCATION}.gke.cloud.google.com",
+                    clusterCertificate: '',
+                    namespace: 'default', 
+                    disableInlineConfig: false
+                )
             }
         }
     }
