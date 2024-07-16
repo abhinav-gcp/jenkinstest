@@ -1,8 +1,11 @@
 pipeline {
-    agent any
+    agent {
+        label 'gke-deploy'
+    }
+
     environment {
-        PROJECT_ID = 'sukrit-singh-426716'
-        CLUSTER_NAME = 'my-gke-cluster'
+        PROJECT_ID = 'ukrit-singh-426716'
+        CLUSTER_NAME = 'y-gke-cluster'
         LOCATION = 'us-east1'
         BUILD_ID = "${env.BUILD_NUMBER}"
         DOCKER_REGISTRY = 'https://registry.hub.docker.com'
@@ -36,17 +39,14 @@ pipeline {
         }
         stage('Deploy to GKE') {
             steps {
-                sh "sed -i '|hello:latest|hello:${BUILD_ID}|g' deployment.yaml"
                 withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS_FILE')]) {
                     withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS_FILE}"]) {
                         sh "gcloud auth activate-service-account --key-file ${GOOGLE_APPLICATION_CREDENTIALS_FILE}"
                         sh "gcloud config set project ${PROJECT_ID}"
                         sh "gcloud config set compute/region ${LOCATION}"
                         sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID}"
-                        // Install kubectl
-                        sh "curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-                        sh "chmod +x kubectl"
-                        sh "sudo mv kubectl /usr/local/bin/kubectl"
+                        // Install kubectl using a package manager
+                        sh "sudo apt-get update && sudo apt-get install -y kubectl"
                         // Deploy to GKE
                         sh "kubectl apply -f deployment.yaml"
                     }
