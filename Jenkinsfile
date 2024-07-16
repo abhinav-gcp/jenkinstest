@@ -1,11 +1,8 @@
 pipeline {
-    agent {
-        label 'gke-deploy'
-    }
-
+    agent any
     environment {
-        PROJECT_ID = 'ukrit-singh-426716'
-        CLUSTER_NAME = 'y-gke-cluster'
+        PROJECT_ID = 'sukrit-singh-426716'
+        CLUSTER_NAME = 'my-gke-cluster'
         LOCATION = 'us-east1'
         BUILD_ID = "${env.BUILD_NUMBER}"
         DOCKER_REGISTRY = 'https://registry.hub.docker.com'
