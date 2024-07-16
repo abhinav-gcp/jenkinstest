@@ -8,7 +8,7 @@ pipeline {
         DOCKER_REGISTRY = 'https://registry.hub.docker.com'
         DOCKER_IMAGE_NAME = 'abhinavsingh8477/hello'
         DOCKER_CREDENTIALS_ID = 'dockerID'
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')
+        GKE_CREDENTIALS_ID = 'gcp-key'
     }
 
     stages {
@@ -36,16 +36,19 @@ pipeline {
         }
         stage('Deploy to GKE') {
             steps {
-                sh "sed -i '/${DOCKER_IMAGE_NAME}:latest/${DOCKER_IMAGE_NAME}:${BUILD_ID}/g' deployment.yaml"
-                kubernetesDeploy(
-                    configs: 'deployment.yaml',
-                    enableConfigSubstitution: true,
-                    kubeconfigId: CREDENTIALS_ID,
-                    clusterUrl: "https://${LOCATION}.gke.cloud.google.com",
-                    clusterCertificate: '',
-                    namespace: 'default', 
-                    disableInlineConfig: false
-                )
+                withCredentials([file(credentialsId: GKE_CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${LOCATION} --project ${PROJECT_ID}"
+                    sh "sed -i '/${DOCKER_IMAGE_NAME}:latest/${DOCKER_IMAGE_NAME}:${BUILD_ID}/g' deployment.yaml"
+                    kubernetesDeploy(
+                        configs: 'deployment.yaml',
+                        enableConfigSubstitution: true,
+                        kubeconfigId: GKE_CREDENTIALS_ID,
+                        clusterUrl: "${CLUSTER_NAME}.gke.${LOCATION}.cloud.google.com",
+                        clusterCertificate: '',
+                        namespace: 'default', 
+                        disableInlineConfig: false
+                    )
+                }
             }
         }
     }
